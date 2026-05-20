@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Communication — Assignment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --accent:    #58a6ff;
+      --accent2:   #f78166;
+      --accent3:   #56d364;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --gold:      #d29922;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 60px;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--accent3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex; gap: 0.25rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      display: block;
+      padding: 0.4rem 0.9rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      background: rgba(88,166,255,0.1);
+    }
+
+    .nav-links a.active { color: var(--accent); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 6rem 2rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    /* animated grid lines background */
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(88,166,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88,166,255,0.04) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridShift 20s linear infinite;
+    }
+
+    @keyframes gridShift {
+      0%   { background-position: 0 0, 0 0; }
+      100% { background-position: 50px 50px, 50px 50px; }
+    }
+
+    .hero-text { position: relative; z-index: 1; }
+
+    .hero-tag {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      color: var(--accent3);
+      text-transform: uppercase;
+      border: 1px solid rgba(86,211,100,0.3);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    .hero-title span { color: var(--accent); }
+
+    .hero-sub {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 480px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-btns {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      margin-top: 2rem;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+    }
+    .btn-primary:hover { background: #79c0ff; transform: translateY(-2px); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+    /* profile card */
+    .profile-card {
+      position: relative; z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      animation: fadeUp 0.6s 0.15s ease both;
+    }
+
+    .profile-img-wrap {
+      width: 620px; height: 620px;
+      margin: 0 auto 1.2rem;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      overflow: hidden;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .profile-img-wrap svg { width: 280px; height: 280px; opacity: 0.4; }
+
+    .profile-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .profile-id {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--accent2);
+      letter-spacing: 0.1em;
+      margin-bottom: 0.8rem;
+    }
+
+    .profile-bio {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .profile-badges {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      justify-content: center;
+      margin-top: 1.2rem;
+    }
+
+    .badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      background: rgba(88,166,255,0.12);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,0.25);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 2rem;
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      color: var(--accent3);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title span { color: var(--accent); }
+
+    .section-divider {
+      width: 48px; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── OVERVIEW CARDS ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-4px); }
+
+    .card-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p { font-size: 0.88rem; color: var(--muted); }
+
+    /* ── TELEGRAPH DIAGRAM ── */
+    .diagram-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 1rem;
+      overflow-x: auto;
+    }
+
+    .diagram-wrap svg { max-width: 100%; height: auto; }
+
+    .diagram-caption {
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
+
+    /* ── TOPICS TABLE ── */
+    .topic-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.8rem;
+    }
+
+    .topic-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      transition: border-color 0.2s;
+    }
+    .topic-item:hover { border-color: var(--accent2); }
+
+    .topic-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--accent2);
+      background: rgba(247,129,102,0.1);
+      border: 1px solid rgba(247,129,102,0.2);
+      border-radius: 4px;
+      padding: 0.1rem 0.45rem;
+      margin-top: 0.2rem;
+      flex-shrink: 0;
+    }
+
+    .topic-text strong { display: block; font-size: 0.92rem; margin-bottom: 0.2rem; }
+    .topic-text span { font-size: 0.82rem; color: var(--muted); }
+
+    /* ── INSPIRE ── */
+    #inspire {
+      position: relative;
+    }
+
+    .inspire-inner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .quote-block {
+      border-left: 3px solid var(--gold);
+      padding-left: 1.5rem;
+    }
+
+    .quote-block blockquote {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 0.8rem;
+    }
+
+    .quote-attr {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--gold);
+    }
+
+    .inspire-points { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+
+    .inspire-points li {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.92rem; color: var(--muted);
+    }
+
+    .inspire-points li::before {
+      content: '→';
+      color: var(--accent3);
+      flex-shrink: 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    /* ── RESOURCES ── */
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .resource-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem;
+      display: flex; align-items: flex-start; gap: 1rem;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .resource-item:hover { border-color: var(--accent); transform: translateY(-3px); }
+
+    .resource-icon {
+      width: 40px; height: 40px; flex-shrink: 0;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .resource-item h4 { font-size: 0.92rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .resource-item p  { font-size: 0.82rem; color: var(--muted); }
+
+    .ext-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      background: rgba(88,166,255,0.12);
+      color: var(--accent);
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+
+    /* ── VIDEO EMBED ── */
+    .video-wrap {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+    .video-wrap iframe {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .hero-grid    { grid-template-columns: 1fr; gap: 2.5rem; }
+      .inspire-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+      nav { padding: 0 1rem; }
+      .nav-links a { padding: 0.3rem 0.55rem; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ░░ NAV ░░ -->
+<nav>
+  <a class="nav-logo" href="#hero">DataComm</a>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#topics">Topics</a></li>
+    <li><a href="#telegraph">Telegraph</a></li>
+    <li><a href="#inspire">Inspiration</a></li>
+    <li><a href="#resources">Resources</a></li>
+  </ul>
+</nav>
+
+<!-- ░░ HERO ░░ -->
+<div id="hero">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <div class="hero-tag">✦ Data Communication Assignment</div>
+      <h1 class="hero-title">
+        Signals, Networks<br/>&amp; the <span>Connected</span> World
+      </h1>
+      <p class="hero-sub">
+        A comprehensive study of data communication — from analog telegraphs
+        to modern fiber-optic networks and wireless protocols.
+      </p>
+      <div class="hero-btns">
+        <a class="btn btn-primary" href="FRANCIS BOATENG (4).docx" target="_blank" rel="noopener">
+          📄 View Assignment ↗
+        </a>
+        <a class="btn btn-outline" href="#overview">Explore Topics</a>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-img-wrap">
+        <!-- Replace src with your actual photo URL -->
+       <img src="photo_2026-05-18_11-30-50.jpg">
+          <circle cx="50" cy="38" r="22" fill="#58a6ff"/>
+          <ellipse cx="50" cy="95" rx="35" ry="28" fill="#58a6ff"/>
+        </svg>
+      </div>
+      <div class="profile-name">FRANCIS ASAMOAH BOATENG</div>
+      <div class="profile-id">ID: PUIT/24210103</div>
+      <p class="profile-bio">
+        Computer Science student passionate about networking, systems design,
+        and how data travels across the globe. This page documents my journey
+        through Data Communication.
+      </p>
+      <div class="profile-badges">
+        <span class="badge">CS Student</span>
+        <span class="badge">Networking</span>
+        <span class="badge">Ghana</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ OVERVIEW ░░ -->
+<section id="overview">
+  <div class="section-label">01 — Overview</div>
+  <h2 class="section-title">What is <span>Data Communication?</span></h2>
+  <div class="section-divider"></div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon" style="background:rgba(88,166,255,0.12);">📡</div>
+      <h3>Transmission</h3>
+      <p>The process of sending data from one device to another through a medium — wired or wireless — using encoded signals.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(86,211,100,0.12);">🔀</div>
+      <h3>Protocols</h3>
+      <p>Rules and standards (TCP/IP, HTTP, Ethernet) that govern how data is packaged, transmitted, and received across networks.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(247,129,102,0.12);">🔒</div>
+      <h3>Security &amp; Integrity</h3>
+      <p>Techniques like error detection, encryption, and checksums that ensure data arrives accurately and securely.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(210,153,34,0.12);">🌐</div>
+      <h3>Network Models</h3>
+      <p>OSI and TCP/IP layered models that break communication into manageable, standardized layers from physical to application.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(88,166,255,0.12);">📶</div>
+      <h3>Bandwidth &amp; Capacity</h3>
+      <p>Nyquist and Shannon theorems define the theoretical limits of data transmission speed over any channel.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(86,211,100,0.12);">🔁</div>
+      <h3>Multiplexing</h3>
+      <p>Techniques (TDM, FDM, WDM) that allow multiple signals to share a single channel simultaneously.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ░░ TOPICS ░░ -->
+<section id="topics">
+  <div class="section-label">02 — Key Topics</div>
+  <h2 class="section-title">What We <span>Studied</span></h2>
+  <div class="section-divider"></div>
+
+  <div class="topic-list">
+    <div class="topic-item">
+      <span class="topic-num">01</span>
+      <div class="topic-text">
+        <strong>Data vs. Signal</strong>
+        <span>Difference between analog and digital data, and how they are represented as signals.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">02</span>
+      <div class="topic-text">
+        <strong>Transmission Media</strong>
+        <span>Twisted-pair, coaxial cable, fiber optics, and wireless media (radio, microwave, infrared).</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">03</span>
+      <div class="topic-text">
+        <strong>OSI &amp; TCP/IP Models</strong>
+        <span>Seven-layer OSI model vs. four-layer TCP/IP model and their respective functions.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">04</span>
+      <div class="topic-text">
+        <strong>Encoding &amp; Modulation</strong>
+        <span>NRZ, Manchester, AMI encoding; AM, FM, PM modulation for analog-to-digital conversion.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">05</span>
+      <div class="topic-text">
+        <strong>Error Detection &amp; Correction</strong>
+        <span>Parity bits, CRC, Hamming codes — methods to detect and fix transmission errors.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">06</span>
+      <div class="topic-text">
+        <strong>Flow &amp; Error Control</strong>
+        <span>Stop-and-wait, sliding window, Go-Back-N, and Selective Repeat ARQ protocols.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">07</span>
+      <div class="topic-text">
+        <strong>Switching</strong>
+        <span>Circuit switching vs. packet switching vs. message switching — trade-offs and applications.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">08</span>
+      <div class="topic-text">
+        <strong>IP Addressing &amp; Routing</strong>
+        <span>IPv4, IPv6, subnetting, and how routers determine the best path for packets.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">09</span>
+      <div class="topic-text">
+        <strong>History of Data Comm</strong>
+        <span>From Morse's telegraph (1837) to fiber optics — the evolution of communication technology.</span>
+      </div>
+    </div>
+    <div class="topic-item">
+      <span class="topic-num">10</span>
+      <div class="topic-text">
+        <strong>Wireless &amp; Mobile Networks</strong>
+        <span>Wi-Fi standards, Bluetooth, cellular generations (2G → 5G), and spread-spectrum techniques.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ░░ TELEGRAPH DIAGRAM ░░ -->
+<section id="telegraph">
+  <div class="section-label">03 — Historical Diagram</div>
+  <h2 class="section-title">The Electric <span>Telegraph</span></h2>
+  <div class="section-divider"></div>
+  <p style="color:var(--muted); max-width:680px; margin-bottom:1.5rem;">
+    The telegraph (1837) was the world's first long-distance electrical communication system,
+    encoding messages as pulses of current — the conceptual ancestor of all modern data networks.
+  </p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg" font-family="'DM Mono', monospace">
+      <!-- Background -->
+      <rect width="900" height="360" fill="#161b22" rx="12"/>
+
+      <!-- Ground lines -->
+      <line x1="0" y1="340" x2="900" y2="340" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+
+      <!-- === SENDER SIDE === -->
+      <!-- Table/desk -->
+      <rect x="40" y="230" width="180" height="12" rx="3" fill="#30363d"/>
+      <rect x="60" y="242" width="12" height="60" fill="#30363d"/>
+      <rect x="188" y="242" width="12" height="60" fill="#30363d"/>
+
+      <!-- Battery -->
+      <rect x="60" y="170" width="50" height="30" rx="4" fill="#1c2e1f" stroke="#56d364" stroke-width="1.5"/>
+      <line x1="72" y1="158" x2="72" y2="170" stroke="#56d364" stroke-width="2"/>
+      <line x1="67" y1="158" x2="77" y2="158" stroke="#56d364" stroke-width="2"/>
+      <line x1="80" y1="162" x2="96" y2="162" stroke="#56d364" stroke-width="2"/>
+      <text x="85" y="192" font-size="10" fill="#56d364" text-anchor="middle">BATTERY</text>
+
+      <!-- Morse Key -->
+      <rect x="140" y="190" width="60" height="20" rx="3" fill="#21262d" stroke="#8b949e" stroke-width="1.5"/>
+      <rect x="155" y="180" width="30" height="12" rx="2" fill="#58a6ff"/>
+      <circle cx="175" cy="186" r="5" fill="#79c0ff"/>
+      <text x="170" y="225" font-size="10" fill="#58a6ff" text-anchor="middle">MORSE KEY</text>
+
+      <!-- Sender label -->
+      <rect x="50" y="130" width="150" height="26" rx="6" fill="rgba(88,166,255,0.12)" stroke="rgba(88,166,255,0.3)" stroke-width="1"/>
+      <text x="125" y="147" font-size="11" fill="#58a6ff" text-anchor="middle" font-weight="bold">SENDER / OPERATOR</text>
+
+      <!-- === TRANSMISSION LINE === -->
+      <!-- Poles -->
+      <line x1="310" y1="80" x2="310" y2="310" stroke="#30363d" stroke-width="8" stroke-linecap="round"/>
+      <line x1="290" y1="95" x2="330" y2="95" stroke="#30363d" stroke-width="5" stroke-linecap="round"/>
+
+      <line x1="470" y1="80" x2="470" y2="310" stroke="#30363d" stroke-width="8" stroke-linecap="round"/>
+      <line x1="450" y1="95" x2="490" y2="95" stroke="#30363d" stroke-width="5" stroke-linecap="round"/>
+
+      <line x1="630" y1="80" x2="630" y2="310" stroke="#30363d" stroke-width="8" stroke-linecap="round"/>
+      <line x1="610" y1="95" x2="650" y2="95" stroke="#30363d" stroke-width="5" stroke-linecap="round"/>
+
+      <!-- Insulators -->
+      <circle cx="310" cy="108" r="6" fill="#f78166"/>
+      <circle cx="470" cy="108" r="6" fill="#f78166"/>
+      <circle cx="630" cy="108" r="6" fill="#f78166"/>
+
+      <!-- Wire from sender to poles -->
+      <path d="M200 200 C260 200 280 108 310 108" stroke="#58a6ff" stroke-width="2.5" fill="none" stroke-dasharray="0"/>
+      <path d="M310 108 Q390 115 470 108" stroke="#58a6ff" stroke-width="2.5" fill="none"/>
+      <path d="M470 108 Q550 115 630 108" stroke="#58a6ff" stroke-width="2.5" fill="none"/>
+      <path d="M630 108 C660 108 680 200 740 200" stroke="#58a6ff" stroke-width="2.5" fill="none"/>
+
+      <!-- Animated signal dot -->
+      <circle r="5" fill="#f78166" opacity="0.9">
+        <animateMotion dur="3s" repeatCount="indefinite"
+          path="M200,200 C260,200 280,108 310,108 Q390,115 470,108 Q550,115 630,108 C660,108 680,200 740,200"/>
+        <animate attributeName="opacity" values="1;0.4;1" dur="0.6s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Ground return wire -->
+      <path d="M200 300 Q450 310 740 300" stroke="#56d364" stroke-width="1.5" fill="none" stroke-dasharray="5,5"/>
+      <text x="450" y="330" font-size="9" fill="#56d364" text-anchor="middle">GROUND RETURN (EARTH)</text>
+
+      <!-- Signal labels on wire -->
+      <text x="390" y="90" font-size="9" fill="#58a6ff" text-anchor="middle">ELECTRICAL SIGNAL (MORSE CODE)</text>
+      <text x="390" y="78" font-size="9" fill="#8b949e" text-anchor="middle">— — · — — · · —</text>
+
+      <!-- === RECEIVER SIDE === -->
+      <!-- Table/desk -->
+      <rect x="680" y="230" width="180" height="12" rx="3" fill="#30363d"/>
+      <rect x="700" y="242" width="12" height="60" fill="#30363d"/>
+      <rect x="828" y="242" width="12" height="60" fill="#30363d"/>
+
+      <!-- Sounder/galvanometer -->
+      <rect x="720" y="175" width="70" height="50" rx="5" fill="#21262d" stroke="#8b949e" stroke-width="1.5"/>
+      <ellipse cx="755" cy="175" rx="20" ry="8" fill="none" stroke="#56d364" stroke-width="1.5"/>
+      <ellipse cx="755" cy="175" rx="13" ry="5" fill="none" stroke="#56d364" stroke-width="1"/>
+      <line x1="755" y1="167" x2="755" y2="160" stroke="#56d364" stroke-width="2"/>
+      <!-- Clicker arm (animated) -->
+      <rect x="740" y="196" width="30" height="5" rx="2" fill="#58a6ff">
+        <animateTransform attributeName="transform" type="rotate"
+          values="0 755 198; -8 755 198; 0 755 198"
+          dur="1.8s" repeatCount="indefinite" keyTimes="0;0.15;1"/>
+      </rect>
+      <text x="755" y="240" font-size="10" fill="#56d364" text-anchor="middle">SOUNDER</text>
+
+      <!-- Paper tape / printer -->
+      <rect x="805" y="185" width="40" height="50" rx="4" fill="#21262d" stroke="#8b949e" stroke-width="1.5"/>
+      <text x="825" y="206" font-size="7" fill="#8b949e" text-anchor="middle">PAPER</text>
+      <text x="825" y="216" font-size="7" fill="#8b949e" text-anchor="middle">TAPE</text>
+      <line x1="812" y1="225" x2="838" y2="225" stroke="#f78166" stroke-width="1"/>
+      <line x1="812" y1="220" x2="838" y2="220" stroke="#f78166" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- Receiver label -->
+      <rect x="700" y="130" width="150" height="26" rx="6" fill="rgba(86,211,100,0.1)" stroke="rgba(86,211,100,0.3)" stroke-width="1"/>
+      <text x="775" y="147" font-size="11" fill="#56d364" text-anchor="middle" font-weight="bold">RECEIVER / OPERATOR</text>
+
+      <!-- Distance label -->
+      <text x="450" y="55" font-size="11" fill="#d29922" text-anchor="middle" font-weight="bold">← LONG DISTANCE (MILES / CONTINENTS) →</text>
+      <line x1="220" y1="62" x2="680" y2="62" stroke="#d29922" stroke-width="1" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#d29922"/>
+        </marker>
+      </defs>
+
+      <!-- Pole labels -->
+      <text x="310" y="320" font-size="9" fill="#8b949e" text-anchor="middle">POLE</text>
+      <text x="470" y="320" font-size="9" fill="#8b949e" text-anchor="middle">POLE</text>
+      <text x="630" y="320" font-size="9" fill="#8b949e" text-anchor="middle">POLE</text>
+    </svg>
+    <p class="diagram-caption">
+      Fig 1. Samuel Morse's Electric Telegraph System (ca. 1837–1844) — sender encodes message via key → current pulses travel wire → sounder at receiver decodes Morse code
+    </p>
+  </div>
+</section>
+
+<!-- ░░ INSPIRATION ░░ -->
+<section id="inspire">
+  <div class="section-label">04 — Inspiration</div>
+  <h2 class="section-title">What <span>Inspires</span> Me</h2>
+  <div class="section-divider"></div>
+
+  <div class="inspire-inner">
+    <div class="quote-block">
+      <blockquote>
+        "The Internet is not just one thing; it's a collection of millions of ongoing human conversations."
+      </blockquote>
+      <div class="quote-attr">— Howard Rheingold</div>
+      <p style="margin-top:1.2rem; color:var(--muted); font-size:0.9rem;">
+        What inspires me most about data communication is the invisible infrastructure
+        that connects 5 billion people. A message I send from Accra reaches Tokyo
+        in milliseconds — travelling through undersea cables, satellites, and routers —
+        because thousands of engineers agreed on protocols.
+      </p>
+    </div>
+
+    <ul class="inspire-points">
+      <li>The idea that open standards (TCP/IP) created more value than any single company could alone</li>
+      <li>How Africa's fibre-optic revolution is reshaping education and economic opportunity</li>
+      <li>The elegance of error-correcting codes — fixing mistakes without retransmitting</li>
+      <li>Seeing how today's 5G networks descended directly from Morse's 1837 telegraph</li>
+      <li>Dreaming of building network infrastructure that reaches rural communities in Ghana</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ░░ RESOURCES ░░ -->
+<section id="resources">
+  <div class="section-label">05 — Resources</div>
+  <h2 class="section-title">Links &amp; <span>Resources</span></h2>
+  <div class="section-divider"></div>
+
+  <div class="resource-grid">
+
+    <!-- Link 1 — Assignment (opens new tab) -->
+    <a class="resource-item" href="https://share.google/DpDipT4DxA9Vl2gEq" target="_blank" rel="noopener">
+      <div class="resource-icon" style="background:rgba(88,166,255,0.12);">📄</div>
+      <div>
+        <h4>ONE MILLION CODERS<span class="ext-badge">↗ NEW TAB</span></h4>
+        <p>ONE MILLION CODERS. Click to open in a new tab.</p>
+      </div>
+    </a>
+
+    <!-- Link 2 — Turnitin / Assignment copy -->
+    <a class="resource-item" href="FRANCIS BOATENG (4).docx" target="_blank" rel="noopener">
+      <div class="resource-icon" style="background:rgba(247,129,102,0.12);">📋</div>
+      <div>
+        <h4>Turnitin Submission <span class="ext-badge">↗ NEW TAB</span></h4>
+        <p>Copy of assignment submitted via Turnitin for plagiarism verification.</p>
+      </div>
+    </a>
+
+    <!-- Link 3 — GitHub repo -->
+    <a class="resource-item" href="" target="_blank" rel="noopener">
+      <div class="resource-icon" style="background:rgba(86,211,100,0.12);">🐙</div>
+      <div>
+        <h4>GitHub Repository <span class="ext-badge">↗ NEW TAB</span></h4>
+        <p>Source code for this page — Data Communication Assignment repo.</p>
+      </div>
+    </a>
+
+    <!-- Link 4 — Reference textbook -->
+    <a class="resource-item" href="https://www.mhprofessional.com/data-communications-and-networking-9780073376226-usa" target="_blank" rel="noopener">
+      <div class="resource-icon" style="background:rgba(210,153,34,0.12);">📚</div>
+      <div>
+        <h4>Textbook Reference</h4>
+        <p>Forouzan, B. A. — <em>Data Communications and Networking</em>, 5th Ed.</p>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- YouTube video (plays inside the tab) -->
+  <h3 style="font-family:'Playfair Display',serif; font-size:1.3rem; margin-top:3rem; margin-bottom:0.4rem;">
+    🎥 Watch: <span style="color:var(--accent);">Data Communication Explained</span>
+  </h3>
+  <p style="color:var(--muted); font-size:0.88rem; margin-bottom:0.5rem;">
+    This video plays directly here in the page — no need to leave.
+  </p>
+  <div class="video-wrap">
+    <!-- Replace VIDEO_ID with the actual YouTube video ID -->
+    <iframe
+      src="https://www.youtube.com/embed/qiQR5rTSshw"
+        allowfullscreen>"
+      title="Data Communication and Networking Explained"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</section>
+
+<!-- ░░ FOOTER ░░ -->
+<footer>
+  <p>Data Communication Assignment &mdash; <strong>FRANCIS ASAMOAH BOATENG</strong> &bull; ID: PUIT/24210103</p>
+  <p style="margin-top:0.4rem;">
+     &nbsp;|&nbsp;
+    <a href="YOUR_GITHUB_REPO_LINK_HERE" target="_blank">GitHub Repo</a> &nbsp;|&nbsp;
+    <a href="https://1millioncoders.com" target="_blank">1 Million Coders</a>
+  </p>
+</footer>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('section[id], div[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
